@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transactions Directory</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/transactions.css') }}">
+</head>
+<body>
+<div class="card">
+    <h1>Transactions Directory</h1>
+</div>
+{% for user_id in users %}
+<div class="card">
+    <h3><a href="/transactions/user/{{ user_id }}">{{ user_id }}</a></h3>
+</div>
+{% endfor %}
+</body>
+</html>

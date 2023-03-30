@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transactions for {{ user }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/transactions.css') }}">
+</head>
+<body>
+<h1>Transactions for {{ user }}</h1>
+
+<div class="card">
+    <h3>You need to pay:</h3>
+    {% for transaction in transactions_to_be_paid %}
+    <div class="transaction-container">
+        <div class="transaction-card">
+            <strong>{{ transaction['payee'] }} </strong>
+            <p>{{ transaction['reference'] }}</p>
+            <p>${{ transaction['amount'] }}</p>
+            <p>{{ transaction['date']}}</p>
+        </div>
+        <button onclick="markAsPaid('{{ transaction['_id'] }}')">Mark as paid</button>
+    </div>
+
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h3>Flatmates need to pay you:</h3>
+    {% for transaction in transactions_owed %}
+    <div class="transaction-container">
+        <div class="transaction-card">
+            <strong>{{ transaction['payer'] }}</strong>
+            <p>{{ transaction['reference'] }}</p>
+            <p>${{ transaction['amount'] }}</p>
+            <p>{{ transaction['date']}}</p>
+        </div>
+        <button onclick="pokePayment('{{ transaction['_id'] }}')">Poke to remind</button>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h3>Add a new transaction:</h3>
+    <p>Tip: This adds a transaction to everyones account. It also sends a notification, so be mindful of what time you
+        send it!</p>
+    <p>Tip: For the amount put the total amount, it will automatically be split {{ num_users }} ways!</p>
+    <form id="new-transaction-form" method="POST">
+        <label for="payee_disabled">Payee:</label>
+        <input type="text" id="payee_disabled" name="payee_disabled" value="{{ user }}" disabled required><br>
+        <label for="amount">Amount:</label>
+        <input type="number" step="0.01" id="amount" name="amount" required><br>
+        <label for="reference">Reference:</label>
+        <input type="text" id="reference" name="reference" required><br>
+        <input type="hidden" id="payee" name="payee" value="{{ user }}" required><br>
+        <button type="submit">Submit</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>History:</h2>
+    <div class="card">
+        <h3>Paid to flatmates:</h3>
+        {% for transaction in transactions_to_be_paid_history %}
+        <div class="transaction-container">
+            <div class="transaction-card">
+                <strong>{{ transaction['payee'] }} </strong>
+                <p>{{ transaction['reference'] }}</p>
+                <p>${{ transaction['amount'] }}</p>
+                <p>{{ transaction['date']}}</p>
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <h3>Recieved from flatmates:</h3>
+        {% for transaction in transactions_owed_history %}
+        <div class="transaction-container">
+            <div class="transaction-card">
+                <strong>{{ transaction['payer'] }}</strong>
+                <p>{{ transaction['reference'] }}</p>
+                <p>${{ transaction['amount'] }}</p>
+                <p>{{ transaction['date']}}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Get the form element and add a submit event listener
+    const form = document.getElementById('new-transaction-form');
+    form.addEventListener('submit', async (event) => {
+        // Prevent the form from submitting normally
+        event.preventDefault();
+
+        // Get the form data
+        const formData = new FormData(form);
+
+        // Send a POST request to the server to submit the form data
+        await fetch('/transactions/addnew', {
+            method: 'POST',
+            body: formData
+        });
+
+        // Reload the page to show the updated data
+        location.reload();
+    });
+</script>
+
+<script>
+    function markAsPaid(id) {
+        fetch('/transactions/markpaid', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({id: id})
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                location.reload();  // refresh the page to show the updated transactions
+            })
+            .catch(error => console.error(error));
+    }
+</script>
+
+<script>
+    function pokePayment(id) {
+        fetch('/transactions/poke', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({id: id})
+        })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                location.reload();  // refresh the page to show the updated transactions
+            })
+            .catch(error => console.error(error));
+    }
+</script>
+</body>
+</html>
